@@ -1,13 +1,20 @@
-import React from "react";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
+import Piano from "./pages/Piano";
+import Chords from "./pages/Chords";
 
-const App: React.FC = () => {
+const App = () => {
   return (
-    <div>
+    <>
       <Navbar />
-      <Home />
-    </div>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/piano" element={<Piano />} />
+        <Route path="/chords" element={<Chords />} />
+      </Routes>
+    </>
   );
 };
 
