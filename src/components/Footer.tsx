@@ -20,23 +20,19 @@ export default function Footer({ setActivePage }: FooterProps) {
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <svg width="32" height="32" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="38" height="38" rx="10" fill="url(#footerLogoGrad)"/>
-            <line x1="7" y1="13" x2="31" y2="13" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <line x1="7" y1="17" x2="31" y2="17" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <line x1="7" y1="21" x2="31" y2="21" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <line x1="7" y1="25" x2="31" y2="25" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <ellipse cx="14" cy="24" rx="4" ry="3" transform="rotate(-15 14 24)" fill="rgba(8,8,16,0.75)"/>
-            <line x1="17.6" y1="22.5" x2="17.6" y2="10" stroke="rgba(8,8,16,0.75)" strokeWidth="1.6" strokeLinecap="round"/>
-            <path d="M17.6 10 Q26 13 22 19" stroke="rgba(8,8,16,0.75)" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
+            <rect width="38" height="38" rx="10" fill="url(#groveFooterGrad)"/>
+            <path d="M24 13.5 A8 8 0 1 0 27 20 L27 20 L22 20" stroke="rgba(8,8,16,0.8)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <line x1="27" y1="20" x2="27" y2="11" stroke="rgba(8,8,16,0.8)" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M27 11 Q32 13.5 30 17" stroke="rgba(8,8,16,0.8)" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
             <defs>
-              <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <linearGradient id="groveFooterGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stopColor="#d4a847"/><stop offset="100%" stopColor="#8a6408"/>
               </linearGradient>
             </defs>
           </svg>
           <div style={{ lineHeight: 1 }}>
-            <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Notara</div>
-            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent-gold)', marginTop: '2px' }}>Music Studio</div>
+            <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Grove</div>
+            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent-gold)', marginTop: '2px' }}>Learn Music</div>
           </div>
         </div>
 

@@ -40,22 +40,17 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '68px' }}>
         <button onClick={() => setActivePage('home')} style={{ display: 'flex', alignItems: 'center', gap: '11px', background: 'none', border: 'none', cursor: 'pointer' }}>
-          {/* Logo mark — stave + note */}
+          {/* Logo mark — G with note stem */}
           <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="38" height="38" rx="10" fill="url(#logoGrad)"/>
-            {/* Stave lines */}
-            <line x1="7" y1="13" x2="31" y2="13" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <line x1="7" y1="17" x2="31" y2="17" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <line x1="7" y1="21" x2="31" y2="21" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            <line x1="7" y1="25" x2="31" y2="25" stroke="rgba(8,8,16,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
-            {/* Filled note head */}
-            <ellipse cx="14" cy="24" rx="4" ry="3" transform="rotate(-15 14 24)" fill="rgba(8,8,16,0.75)"/>
-            {/* Stem */}
-            <line x1="17.6" y1="22.5" x2="17.6" y2="10" stroke="rgba(8,8,16,0.75)" strokeWidth="1.6" strokeLinecap="round"/>
-            {/* Flag */}
-            <path d="M17.6 10 Q26 13 22 19" stroke="rgba(8,8,16,0.75)" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
+            <rect width="38" height="38" rx="10" fill="url(#groveGrad)"/>
+            {/* Stylised G */}
+            <path d="M24 13.5 A8 8 0 1 0 27 20 L27 20 L22 20" stroke="rgba(8,8,16,0.8)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            {/* Note stem growing up from the G */}
+            <line x1="27" y1="20" x2="27" y2="11" stroke="rgba(8,8,16,0.8)" strokeWidth="2" strokeLinecap="round"/>
+            {/* Note flag */}
+            <path d="M27 11 Q32 13.5 30 17" stroke="rgba(8,8,16,0.8)" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
             <defs>
-              <linearGradient id="logoGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <linearGradient id="groveGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stopColor="#d4a847"/>
                 <stop offset="100%" stopColor="#8a6408"/>
               </linearGradient>
@@ -63,8 +58,8 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
           </svg>
           {/* Wordmark */}
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Notara</span>
-            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent-gold)', marginTop: '1px' }}>Music Studio</span>
+            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Grove</span>
+            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent-gold)', marginTop: '1px' }}>Learn Music</span>
           </div>
         </button>
 

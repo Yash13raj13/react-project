@@ -1,259 +1,392 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
-const KEYBOARD_LAYOUT = [
-  { note: 'C4', label: 'C', type: 'white', key: 'a' },
-  { note: 'C#4', label: 'C#', type: 'black', key: 'w' },
-  { note: 'D4', label: 'D', type: 'white', key: 's' },
-  { note: 'D#4', label: 'D#', type: 'black', key: 'e' },
-  { note: 'E4', label: 'E', type: 'white', key: 'd' },
-  { note: 'F4', label: 'F', type: 'white', key: 'f' },
-  { note: 'F#4', label: 'F#', type: 'black', key: 't' },
-  { note: 'G4', label: 'G', type: 'white', key: 'g' },
-  { note: 'G#4', label: 'G#', type: 'black', key: 'y' },
-  { note: 'A4', label: 'A', type: 'white', key: 'h' },
-  { note: 'A#4', label: 'A#', type: 'black', key: 'u' },
-  { note: 'B4', label: 'B', type: 'white', key: 'j' },
-  { note: 'C5', label: 'C', type: 'white', key: 'k' },
-  { note: 'C#5', label: 'C#', type: 'black', key: 'o' },
-  { note: 'D5', label: 'D', type: 'white', key: 'l' },
+
+const KEYS = [
+  { note: 'C4',  label: 'C',  type: 'white', kb: 'A' },
+  { note: 'C#4', label: 'C#', type: 'black', kb: 'W' },
+  { note: 'D4',  label: 'D',  type: 'white', kb: 'S' },
+  { note: 'D#4', label: 'D#', type: 'black', kb: 'E' },
+  { note: 'E4',  label: 'E',  type: 'white', kb: 'D' },
+  { note: 'F4',  label: 'F',  type: 'white', kb: 'F' },
+  { note: 'F#4', label: 'F#', type: 'black', kb: 'T' },
+  { note: 'G4',  label: 'G',  type: 'white', kb: 'G' },
+  { note: 'G#4', label: 'G#', type: 'black', kb: 'Y' },
+  { note: 'A4',  label: 'A',  type: 'white', kb: 'H' },
+  { note: 'A#4', label: 'A#', type: 'black', kb: 'U' },
+  { note: 'B4',  label: 'B',  type: 'white', kb: 'J' },
+  { note: 'C5',  label: 'C',  type: 'white', kb: 'K' },
+  { note: 'C#5', label: 'C#', type: 'black', kb: 'O' },
+  { note: 'D5',  label: 'D',  type: 'white', kb: 'L' },
+  { note: 'D#5', label: 'D#', type: 'black', kb: 'P' },
+  { note: 'E5',  label: 'E',  type: 'white', kb: ';' },
 ]
 
-const NOTE_FREQUENCIES: Record<string, number> = {
+const FREQS: Record<string, number> = {
   'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
   'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00,
   'A#4': 466.16, 'B4': 493.88, 'C5': 523.25, 'C#5': 554.37, 'D5': 587.33,
+  'D#5': 622.25, 'E5': 659.25,
 }
 
-const WAVEFORMS: OscillatorType[] = ['sine', 'square', 'sawtooth', 'triangle']
+const WAVEFORMS: OscillatorType[] = ['sine', 'triangle', 'sawtooth', 'square']
 
-const SCALE_PATTERNS: Record<string, { notes: string[]; label: string }> = {
-  'C Major': { notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'], label: 'C Major' },
-  'A Minor': { notes: ['A4', 'B4', 'C5', 'D5', 'E4', 'F4', 'G4', 'A4'], label: 'A Minor' },
-  'C Pentatonic': { notes: ['C4', 'D4', 'E4', 'G4', 'A4', 'C5'], label: 'C Pentatonic' },
-  'Blues': { notes: ['A4', 'C5', 'D5', 'D#4', 'E4', 'G4'], label: 'A Blues' },
+const SCALES: Record<string, string[]> = {
+  'None':        [],
+  'C Major':     ['C4','D4','E4','F4','G4','A4','B4','C5'],
+  'A Minor':     ['A4','B4','C5','D5','E4','F4','G4'],
+  'C Pentatonic':['C4','D4','E4','G4','A4','C5'],
+  'A Blues':     ['A4','C5','D5','D#5','E5','G4'],
+}
+
+const QUICK_CHORDS = [
+  { name: 'C',     notes: ['C4','E4','G4'],       color: '#d4a847' },
+  { name: 'Am',    notes: ['A4','C5','E4'],        color: '#9b7fe8' },
+  { name: 'F',     notes: ['F4','A4','C5'],        color: '#2dd4c8' },
+  { name: 'G',     notes: ['G4','B4','D5'],        color: '#e8507a' },
+  { name: 'Em',    notes: ['E4','G4','B4'],        color: '#6bc96b' },
+  { name: 'Dm',    notes: ['D4','F4','A4'],        color: '#ff9f43' },
+  { name: 'G7',    notes: ['G4','B4','D5','F4'],   color: '#4db8ff' },
+  { name: 'Cmaj7', notes: ['C4','E4','G4','B4'],   color: '#ff6b6b' },
+]
+
+const KB_MAP: Record<string, string> = {}
+KEYS.forEach(k => { KB_MAP[k.kb.toLowerCase()] = k.note })
+
+
+let _ctx: AudioContext | null = null
+let _master: GainNode | null = null
+let _dryGain: GainNode | null = null
+let _wetGain: GainNode | null = null
+
+function ensureGraph() {
+  if (_ctx && _ctx.state !== 'closed') return _ctx
+  _ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  _master  = _ctx.createGain();  _master.gain.value = 0.5
+  _dryGain = _ctx.createGain();  _dryGain.gain.value = 0.8
+  _wetGain = _ctx.createGain();  _wetGain.gain.value = 0.2
+
+ 
+  const conv = _ctx.createConvolver()
+  const len  = _ctx.sampleRate * 2
+  const buf  = _ctx.createBuffer(2, len, _ctx.sampleRate)
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c)
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5)
+  }
+  conv.buffer = buf
+
+  _master.connect(_dryGain)
+  _master.connect(conv)
+  conv.connect(_wetGain)
+  _dryGain.connect(_ctx.destination)
+  _wetGain.connect(_ctx.destination)
+  return _ctx
 }
 
 export default function InteractiveKeyboard() {
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set())
-  const [waveform, setWaveform] = useState<OscillatorType>('sine')
-  const [octave] = useState(4)
-  const [highlightScale, setHighlightScale] = useState<string | null>(null)
   const [playedNotes, setPlayedNotes] = useState<string[]>([])
-  const [volume, setVolume] = useState(0.4)
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const activeOscillatorsRef = useRef<Map<string, { osc: OscillatorNode; gain: GainNode }>>(new Map())
+  const [activeTab, setActiveTab]     = useState<'synth'|'chords'|'info'>('synth')
 
-  const getAudioCtx = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
-    }
-    return audioCtxRef.current
+
+  const [waveform, setWaveformState] = useState<OscillatorType>('triangle')
+  const [volume,   setVolumeState]   = useState(0.5)
+  const [attack,   setAttackState]   = useState(0.01)
+  const [release,  setReleaseState]  = useState(0.35)
+  const [reverbMix,setReverbState]   = useState(0.2)
+  const [scaleKey, setScaleKey]      = useState('None')
+
+  const waveformRef  = useRef<OscillatorType>('triangle')
+  const attackRef    = useRef(0.01)
+  const releaseRef   = useRef(0.35)
+
+  const activeOscs = useRef<Map<string, { osc: OscillatorNode; gain: GainNode }>>(new Map())
+
+  
+  function setWaveform(v: OscillatorType) { waveformRef.current = v; setWaveformState(v) }
+  function setAttack(v: number)           { attackRef.current  = v; setAttackState(v)   }
+  function setRelease(v: number)          { releaseRef.current = v; setReleaseState(v)  }
+  function setVolume(v: number) {
+    setVolumeState(v)
+    if (_master) _master.gain.value = v
+  }
+  function setReverb(v: number) {
+    setReverbState(v)
+    if (_dryGain) _dryGain.gain.value = 1 - v
+    if (_wetGain) _wetGain.gain.value = v
   }
 
-  const playNote = useCallback((note: string) => {
-    if (activeOscillatorsRef.current.has(note)) return
-    const ctx = getAudioCtx()
-    if (ctx.state === 'suspended') ctx.resume()
-
-    const freq = NOTE_FREQUENCIES[note]
+  
+  function playNote(note: string) {
+    if (activeOscs.current.has(note)) return
+    const freq = FREQS[note]
     if (!freq) return
 
-    const osc = ctx.createOscillator()
-    const gainNode = ctx.createGain()
+    const ctx = ensureGraph()
+    if (ctx.state === 'suspended') ctx.resume()
+
+    const osc    = ctx.createOscillator()
+    const gain   = ctx.createGain()
     const filter = ctx.createBiquadFilter()
 
-    osc.type = waveform
-    osc.frequency.setValueAtTime(freq, ctx.currentTime)
-
     filter.type = 'lowpass'
-    filter.frequency.setValueAtTime(waveform === 'sine' ? 8000 : 3000, ctx.currentTime)
+    filter.frequency.value = waveformRef.current === 'sine' ? 8000
+      : waveformRef.current === 'triangle' ? 5000 : 3200
 
-    gainNode.gain.setValueAtTime(0, ctx.currentTime)
-    gainNode.gain.linearRampToValueAtTime(volume * 0.7, ctx.currentTime + 0.01)
+    osc.type = waveformRef.current
+    osc.frequency.value = freq
+    osc.detune.value = (Math.random() - 0.5) * 4
+
+    const now = ctx.currentTime
+    gain.gain.setValueAtTime(0, now)
+    gain.gain.linearRampToValueAtTime(0.9, now + Math.max(0.005, attackRef.current))
 
     osc.connect(filter)
-    filter.connect(gainNode)
-    gainNode.connect(ctx.destination)
+    filter.connect(gain)
+    gain.connect(_master ?? ctx.destination)
     osc.start()
 
-    activeOscillatorsRef.current.set(note, { osc, gain: gainNode })
-    setPressedKeys(prev => new Set([...prev, note]))
-    setPlayedNotes(prev => [...prev.slice(-15), note.replace(/\d/, '')])
-  }, [waveform, volume])
-
-  const stopNote = useCallback((note: string) => {
-    const active = activeOscillatorsRef.current.get(note)
-    if (!active) return
-    const ctx = getAudioCtx()
-
-    active.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15)
-    active.osc.stop(ctx.currentTime + 0.15)
-    activeOscillatorsRef.current.delete(note)
-    setPressedKeys(prev => { const s = new Set(prev); s.delete(note); return s })
-  }, [])
-
-  const playChord = (notes: string[]) => {
-    notes.forEach(n => { playNote(n); setTimeout(() => stopNote(n), 1200) })
+    activeOscs.current.set(note, { osc, gain })
+    setPressedKeys(p => new Set([...p, note]))
+    setPlayedNotes(p => [...p.slice(-19), note.replace(/\d/, '')])
   }
 
-  const scaleHighlight = highlightScale ? SCALE_PATTERNS[highlightScale]?.notes : []
-  const whiteKeys = KEYBOARD_LAYOUT.filter(k => k.type === 'white')
-  const allKeys = KEYBOARD_LAYOUT
+  function stopNote(note: string) {
+    const entry = activeOscs.current.get(note)
+    if (!entry) return
+    const ctx = ensureGraph()
+    const now = ctx.currentTime
+    const rel = Math.max(0.05, releaseRef.current)
+    entry.gain.gain.cancelScheduledValues(now)
+    entry.gain.gain.setValueAtTime(entry.gain.gain.value, now)
+    entry.gain.gain.linearRampToValueAtTime(0, now + rel)
+    entry.osc.stop(now + rel)
+    activeOscs.current.delete(note)
+    setPressedKeys(p => { const s = new Set(p); s.delete(note); return s })
+  }
 
-  const chords = [
-    { name: 'C Major', notes: ['C4', 'E4', 'G4'], color: '#d4a847' },
-    { name: 'A Minor', notes: ['A4', 'C5', 'E4'], color: '#9b7fe8' },
-    { name: 'G Major', notes: ['G4', 'B4', 'D5'], color: '#2dd4c8' },
-    { name: 'F Major', notes: ['F4', 'A4', 'C5'], color: '#e8507a' },
-    { name: 'D Minor', notes: ['D4', 'F4', 'A4'], color: '#6bc96b' },
-    { name: 'E Minor', notes: ['E4', 'G4', 'B4'], color: '#ff9f43' },
-  ]
+  function playChord(notes: string[], dur = 1300) {
+    notes.forEach(n => { playNote(n); setTimeout(() => stopNote(n), dur) })
+  }
 
+  
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.repeat) return
+      const note = KB_MAP[e.key.toLowerCase()]
+      if (note) playNote(note)
+    }
+    const up = (e: KeyboardEvent) => {
+      const note = KB_MAP[e.key.toLowerCase()]
+      if (note) stopNote(note)
+    }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup',   up)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
+  
+  }, []) 
+
+  const scaleNotes = SCALES[scaleKey] ?? []
+  const whiteKeys  = KEYS.filter(k => k.type === 'white')
+
+  
   return (
     <div style={{ paddingTop: '100px', paddingBottom: '80px', minHeight: '100vh' }}>
       <div className="container">
-        {/* Header */}
-        <div style={{ marginBottom: '48px', animation: 'fadeUp 0.6s ease forwards' }}>
+
+        <div style={{ marginBottom: '36px' }}>
           <div className="section-label">Playground</div>
-          <h1 className="section-title">Interactive Playground</h1>
-          <p className="section-subtitle">
-            Play notes, explore chords, and experiment with sound synthesis in real-time.
-          </p>
+          <h1 className="section-title">Synth Playground</h1>
+          <p className="section-subtitle">Click keys or use your computer keyboard. Shape sound with the synth controls below.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', animation: 'fadeUp 0.6s ease 0.1s both forwards', opacity: 0 }}>
-          {/* Main keyboard area */}
+        
+        <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid var(--border)' }}>
+          {(['synth','chords','info'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              padding: '9px 18px', background: 'none', border: 'none',
+              borderBottom: activeTab === tab ? '2px solid var(--accent-gold)' : '2px solid transparent',
+              color: activeTab === tab ? 'var(--accent-gold)' : 'var(--text-secondary)',
+              fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: '500',
+              cursor: 'pointer', transition: 'all 0.18s', textTransform: 'capitalize',
+            }}>
+              {tab === 'synth' ? '🎛️ Synth' : tab === 'chords' ? '🎶 Chords' : '📖 How to Play'}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '20px' }}>
+
+          
           <div>
-            {/* Controls */}
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '28px', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '11px', color: '#55546a', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Waveform</div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {WAVEFORMS.map(w => (
-                    <button key={w} onClick={() => setWaveform(w)} style={{
-                      padding: '7px 14px', borderRadius: '8px',
-                      background: waveform === w ? 'rgba(212,168,71,0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${waveform === w ? 'rgba(212,168,71,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                      color: waveform === w ? '#d4a847' : '#9896a8',
-                      fontFamily: 'DM Mono, monospace', fontSize: '11px',
-                      cursor: 'pointer', transition: 'all 0.2s', textTransform: 'capitalize',
-                    }}>{w}</button>
+
+           
+            {activeTab === 'synth' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+
+                {/* Waveform */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px 18px' }}>
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>Waveform</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {WAVEFORMS.map(w => (
+                      <button key={w} onClick={() => setWaveform(w)} style={{
+                        flex: 1, padding: '7px 4px', borderRadius: '7px',
+                        background: waveform === w ? 'rgba(212,168,71,0.14)' : 'transparent',
+                        border: `1px solid ${waveform === w ? 'rgba(212,168,71,0.45)' : 'var(--border)'}`,
+                        color: waveform === w ? 'var(--accent-gold)' : 'var(--text-muted)',
+                        fontFamily: 'DM Mono, monospace', fontSize: '10px',
+                        cursor: 'pointer', transition: 'all 0.15s', textTransform: 'capitalize',
+                      }}>{w.slice(0,3)}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scale */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px 18px' }}>
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>Scale Highlight</div>
+                  <select value={scaleKey} onChange={e => setScaleKey(e.target.value)} style={{ width: '100%', fontSize: '12px' }}>
+                    {Object.keys(SCALES).map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                {/* ADSR */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px 18px' }}>
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>Envelope</div>
+                  {[
+                    { label: 'Attack',  val: attack,  set: setAttack,  min: 0.001, max: 1,   step: 0.001 },
+                    { label: 'Release', val: release, set: setRelease, min: 0.05,  max: 3,   step: 0.01  },
+                  ].map(row => (
+                    <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text-muted)', width: '46px', flexShrink: 0 }}>{row.label}</span>
+                      <input type="range" min={row.min} max={row.max} step={row.step} value={row.val}
+                        onChange={e => row.set(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--accent-gold)', width: '32px', textAlign: 'right' }}>{row.val.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mix */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px 18px' }}>
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>Mix</div>
+                  {[
+                    { label: 'Volume', val: volume,   set: setVolume, min: 0, max: 1, step: 0.01 },
+                    { label: 'Reverb', val: reverbMix, set: setReverb, min: 0, max: 1, step: 0.01 },
+                  ].map(row => (
+                    <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text-muted)', width: '46px', flexShrink: 0 }}>{row.label}</span>
+                      <input type="range" min={row.min} max={row.max} step={row.step} value={row.val}
+                        onChange={e => row.set(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--accent-gold)', width: '32px', textAlign: 'right' }}>{Math.round(row.val * 100)}%</span>
+                    </div>
                   ))}
                 </div>
               </div>
-              <div>
-                <div style={{ fontSize: '11px', color: '#55546a', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Volume</div>
-                <input
-                  type="range" min="0" max="1" step="0.05" value={volume}
-                  onChange={e => setVolume(parseFloat(e.target.value))}
-                  style={{ width: '100px', accentColor: '#d4a847' }}
-                />
-              </div>
-              <div>
-                <div style={{ fontSize: '11px', color: '#55546a', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Highlight Scale</div>
-                <select
-                  value={highlightScale || ''}
-                  onChange={e => setHighlightScale(e.target.value || null)}
-                  style={{
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '8px', padding: '7px 12px',
-                    color: '#f0ede8', fontFamily: 'DM Mono, monospace', fontSize: '11px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">None</option>
-                  {Object.keys(SCALE_PATTERNS).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
+            )}
 
-            {/* Piano keyboard */}
-            <div style={{
-              position: 'relative',
-              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: '16px', padding: '24px 20px 20px',
-              overflow: 'hidden',
-            }}>
-              <div style={{ position: 'relative', display: 'flex', height: '160px', gap: '3px', justifyContent: 'center' }}>
-                {whiteKeys.map((key, i) => {
-                  const isPressed = pressedKeys.has(key.note)
-                  const isHighlighted = scaleHighlight.includes(key.note)
+            {/* Chord grid */}
+            {activeTab === 'chords' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px', marginBottom: '20px' }}>
+                {QUICK_CHORDS.map(c => (
+                  <button key={c.name} onMouseDown={() => playChord(c.notes)}
+                    style={{ padding: '16px 8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}
+                    onMouseEnter={e => { (e.currentTarget).style.borderColor = c.color + '60'; (e.currentTarget).style.background = c.color + '10' }}
+                    onMouseLeave={e => { (e.currentTarget).style.borderColor = 'var(--border)'; (e.currentTarget).style.background = 'var(--bg-card)' }}
+                  >
+                    <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: '700', color: c.color }}>{c.name}</div>
+                    <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>{c.notes.map(n => n.replace(/\d/,'')).join('·')}</div>
+                  </button>
+                ))}
+              </div>
+            )}
 
+            {/* Info */}
+            {activeTab === 'info' && (
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px', marginBottom: '20px' }}>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', color: 'var(--text-primary)', marginBottom: '16px' }}>How to Play</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.7' }}>
+                  {[
+                    ['⌨️', 'Keyboard', 'White keys: A S D F G H J K L  |  Black keys: W E T Y U O P'],
+                    ['🖱️', 'Mouse',    'Click and hold any piano key to play it.'],
+                    ['🎛️', 'Waveform', 'Sine = soft & pure. Triangle = warm. Sawtooth = bright. Square = buzzy.'],
+                    ['⚡', 'Attack',   'How fast the note fades in. Low = snappy, High = slow swell.'],
+                    ['🌊', 'Release',  'How long the note rings after you release the key.'],
+                    ['🏛️', 'Reverb',   'Adds room/hall echo — increase for a spacious sound.'],
+                    ['🎵', 'Scale',    'Highlights the notes of a chosen scale on the keys.'],
+                  ].map(([icon, title, desc]) => (
+                    <div key={title as string}>
+                      <span>{icon} </span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{title}: </strong>
+                      <span>{desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '18px', overflowX: 'auto' }}>
+              <div style={{ position: 'relative', display: 'flex', height: '158px', gap: '3px', minWidth: '580px' }}>
+
+                
+                {whiteKeys.map(key => {
+                  const pressed     = pressedKeys.has(key.note)
+                  const highlighted = scaleNotes.includes(key.note)
                   return (
-                    <div
-                      key={key.note}
+                    <div key={key.note}
                       onMouseDown={() => playNote(key.note)}
                       onMouseUp={() => stopNote(key.note)}
                       onMouseLeave={() => stopNote(key.note)}
                       onTouchStart={e => { e.preventDefault(); playNote(key.note) }}
                       onTouchEnd={() => stopNote(key.note)}
                       style={{
-                        position: 'relative',
-                        width: '52px',
-                        height: '100%',
-                        background: isPressed
-                          ? 'linear-gradient(to bottom, #d4a847, #a07a28)'
-                          : isHighlighted
-                          ? 'rgba(212,168,71,0.15)'
-                          : 'rgba(240,237,232,0.92)',
-                        border: `1px solid ${isHighlighted ? 'rgba(212,168,71,0.5)' : 'rgba(0,0,0,0.2)'}`,
-                        borderRadius: '0 0 8px 8px',
-                        cursor: 'pointer',
-                        transition: 'background 0.05s, transform 0.05s',
-                        transform: isPressed ? 'scaleY(0.96) translateY(3px)' : 'none',
-                        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                        paddingBottom: '10px',
-                        boxShadow: isPressed ? 'inset 0 -2px 8px rgba(0,0,0,0.3)' : '0 4px 8px rgba(0,0,0,0.4)',
-                        zIndex: 1,
-                        userSelect: 'none',
-                      }}
-                    >
-                      <span style={{ fontSize: '10px', color: isHighlighted ? '#d4a847' : '#999', fontFamily: 'DM Mono, monospace', fontWeight: '600' }}>{key.label}</span>
-                      <span style={{ position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)', fontSize: '9px', color: isHighlighted ? '#d4a847' : '#bbb', fontFamily: 'DM Mono, monospace' }}>{key.key.toUpperCase()}</span>
+                        flex: 1, minWidth: '40px', height: '100%',
+                        background: pressed
+                          ? 'linear-gradient(to bottom, var(--accent-gold), var(--accent-gold-dim))'
+                          : highlighted ? 'rgba(212,168,71,0.15)' : '#f0ede8',
+                        border: `1px solid ${highlighted ? 'rgba(212,168,71,0.5)' : 'rgba(0,0,0,0.13)'}`,
+                        borderRadius: '0 0 8px 8px', cursor: 'pointer',
+                        transform: pressed ? 'scaleY(0.96) translateY(3px)' : 'none',
+                        transition: 'background 0.04s, transform 0.04s',
+                        boxShadow: pressed ? 'inset 0 -2px 6px rgba(0,0,0,0.25)' : '0 4px 8px rgba(0,0,0,0.18)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        justifyContent: 'flex-end', paddingBottom: '7px',
+                        zIndex: 1, userSelect: 'none', position: 'relative',
+                      }}>
+                      <span style={{ fontSize: '8px', color: highlighted ? 'var(--accent-gold)' : '#bbb', fontFamily: 'DM Mono, monospace' }}>{key.kb}</span>
+                      <span style={{ fontSize: '9px', color: highlighted ? 'var(--accent-gold)' : '#999', fontFamily: 'DM Mono, monospace', fontWeight: '600' }}>{key.label}</span>
                     </div>
                   )
                 })}
 
-                {/* Black keys */}
+  
                 {(() => {
-                  let whiteIdx = 0
-                  return allKeys.map((key, i) => {
-                    if (key.type === 'white') { whiteIdx++; return null }
-                    const isPressed = pressedKeys.has(key.note)
-                    const isHighlighted = scaleHighlight.includes(key.note)
-                    const leftOffset = (whiteIdx - 0.5) * 55 + 20 - 16
-
+                  let wi = 0
+                  const WW = 43 
+                  return KEYS.map(key => {
+                    if (key.type === 'white') { wi++; return null }
+                    const pressed     = pressedKeys.has(key.note)
+                    const highlighted = scaleNotes.includes(key.note)
+                    const left        = (wi - 0.5) * WW + 18 - 13
                     return (
-                      <div
-                        key={key.note}
+                      <div key={key.note}
                         onMouseDown={e => { e.stopPropagation(); playNote(key.note) }}
                         onMouseUp={() => stopNote(key.note)}
                         onMouseLeave={() => stopNote(key.note)}
                         onTouchStart={e => { e.preventDefault(); playNote(key.note) }}
                         onTouchEnd={() => stopNote(key.note)}
                         style={{
-                          position: 'absolute',
-                          left: `${leftOffset}px`,
-                          top: '0',
-                          width: '32px',
-                          height: '95px',
-                          background: isPressed
-                            ? 'linear-gradient(to bottom, #d4a847, #805010)'
-                            : isHighlighted
-                            ? 'rgba(180,130,40,0.8)'
-                            : '#1a1a2e',
-                          border: `1px solid ${isHighlighted ? 'rgba(212,168,71,0.6)' : 'rgba(255,255,255,0.1)'}`,
-                          borderRadius: '0 0 6px 6px',
-                          cursor: 'pointer',
-                          zIndex: 2,
-                          transition: 'background 0.05s',
-                          boxShadow: isPressed ? 'none' : '2px 4px 12px rgba(0,0,0,0.7)',
+                          position: 'absolute', top: 0, left: `${left}px`,
+                          width: '27px', height: '94px',
+                          background: pressed
+                            ? 'linear-gradient(to bottom, var(--accent-gold), #7a4e08)'
+                            : highlighted ? 'rgba(160,120,30,0.85)' : '#1a1a2e',
+                          border: `1px solid ${highlighted ? 'rgba(212,168,71,0.55)' : 'rgba(255,255,255,0.07)'}`,
+                          borderRadius: '0 0 6px 6px', cursor: 'pointer', zIndex: 2,
+                          transition: 'background 0.04s',
+                          boxShadow: pressed ? 'none' : '2px 4px 10px rgba(0,0,0,0.55)',
                           display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                          paddingBottom: '8px',
-                          userSelect: 'none',
-                        }}
-                      >
-                        <span style={{ fontSize: '8px', color: isHighlighted ? '#d4a847' : '#666', fontFamily: 'DM Mono, monospace' }}>{key.key.toUpperCase()}</span>
+                          paddingBottom: '5px', userSelect: 'none',
+                        }}>
+                        <span style={{ fontSize: '8px', color: highlighted ? '#d4a847' : '#444', fontFamily: 'DM Mono, monospace' }}>{key.kb}</span>
                       </div>
                     )
                   })
@@ -261,86 +394,54 @@ export default function InteractiveKeyboard() {
               </div>
             </div>
 
-            {/* Played notes trail */}
-            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', minHeight: '36px' }}>
-              <span style={{ fontSize: '11px', color: '#55546a', fontFamily: 'DM Mono, monospace', flexShrink: 0 }}>PLAYED:</span>
-              {playedNotes.map((note, i) => (
+            {/* Note trail */}
+            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', minHeight: '28px' }}>
+              <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text-muted)' }}>♪</span>
+              {playedNotes.map((n, i) => (
                 <span key={i} style={{
-                  padding: '3px 10px', borderRadius: '6px',
-                  background: `rgba(212,168,71,${0.05 + (i / playedNotes.length) * 0.15})`,
-                  border: '1px solid rgba(212,168,71,0.15)',
-                  color: '#d4a847', fontFamily: 'DM Mono, monospace', fontSize: '12px',
-                  transition: 'all 0.3s',
-                }}>{note}</span>
+                  padding: '2px 7px', borderRadius: '5px', fontFamily: 'DM Mono, monospace', fontSize: '11px',
+                  background: `rgba(212,168,71,${0.04 + (i / playedNotes.length) * 0.18})`,
+                  border: '1px solid rgba(212,168,71,0.12)', color: 'var(--accent-gold)',
+                }}>{n}</span>
               ))}
               {playedNotes.length > 0 && (
-                <button onClick={() => setPlayedNotes([])} style={{
-                  background: 'none', border: 'none', color: '#55546a', cursor: 'pointer', fontSize: '12px',
-                }}>clear</button>
+                <button onClick={() => setPlayedNotes([])} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px', fontFamily: 'DM Mono, monospace' }}>clear</button>
               )}
             </div>
           </div>
 
-          {/* Chord panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ fontSize: '12px', color: '#55546a', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Quick Chords</div>
-            {chords.map(chord => (
-              <button
-                key={chord.name}
-                onMouseDown={() => playChord(chord.notes)}
-                className="glass-card"
-                style={{
-                  padding: '16px 20px', cursor: 'pointer', border: 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                }}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)' }}>Quick Chords</div>
+            {QUICK_CHORDS.map(c => (
+              <button key={c.name} onMouseDown={() => playChord(c.notes)}
+                style={{ padding: '13px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget).style.borderColor = c.color + '50'; (e.currentTarget).style.transform = 'translateY(-1px)' }}
+                onMouseLeave={e => { (e.currentTarget).style.borderColor = 'var(--border)'; (e.currentTarget).style.transform = 'none' }}
               >
                 <div>
-                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '15px', fontWeight: '600', color: '#f0ede8', marginBottom: '4px' }}>{chord.name}</div>
-                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '11px', color: '#55546a' }}>{chord.notes.map(n => n.replace(/\d/, '')).join(' – ')}</div>
+                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '1px' }}>{c.name}</div>
+                  <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text-muted)' }}>{c.notes.map(n => n.replace(/\d/,'')).join('·')}</div>
                 </div>
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '50%',
-                  background: chord.color + '20', border: `1px solid ${chord.color}40`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '16px', color: chord.color,
-                }}>♪</div>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: c.color + '18', border: `1px solid ${c.color}38`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.color, fontSize: '13px', flexShrink: 0 }}>♪</div>
               </button>
             ))}
 
-            {/* Keyboard hint */}
-            <div style={{ marginTop: '8px', padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px' }}>
-              <div style={{ fontSize: '11px', color: '#55546a', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>Keyboard Mapping</div>
-              <div style={{ fontSize: '12px', color: '#9896a8', lineHeight: '1.8' }}>
-                White keys: <span style={{ color: '#d4a847', fontFamily: 'DM Mono, monospace' }}>A S D F G H J K L</span><br/>
-                Black keys: <span style={{ color: '#d4a847', fontFamily: 'DM Mono, monospace' }}>W E T Y U O</span>
+            {/* Active keys display */}
+            <div style={{ marginTop: '4px', padding: '12px 14px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+              <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '7px' }}>
+                Active: {pressedKeys.size}
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', minHeight: '20px' }}>
+                {[...pressedKeys].map(k => (
+                  <span key={k} style={{ padding: '2px 7px', borderRadius: '4px', background: 'rgba(212,168,71,0.14)', border: '1px solid rgba(212,168,71,0.28)', color: 'var(--accent-gold)', fontFamily: 'DM Mono, monospace', fontSize: '11px' }}>
+                    {k.replace(/\d/,'')}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Interval reference */}
-        <div style={{ marginTop: '48px', animation: 'fadeUp 0.6s ease 0.3s both forwards', opacity: 0 }}>
-          <div style={{ fontSize: '12px', color: '#55546a', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>Quick Reference — Note Frequencies</div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {Object.entries(NOTE_FREQUENCIES).map(([note, freq]) => (
-              <div key={note} style={{
-                padding: '8px 14px', borderRadius: '8px',
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '13px', color: '#f0ede8', marginBottom: '2px' }}>{note.replace(/4|5/, '')}</div>
-                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: '#55546a' }}>{freq} Hz</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
-
-      <style>{`
-        @media (max-width: 900px) {
-          .keyboard-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   )
 }
